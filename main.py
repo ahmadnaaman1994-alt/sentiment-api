@@ -21,13 +21,20 @@ app = FastAPI(
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
 
-
+from pydantic import BaseModel, Field
 class SentimentRequest(BaseModel):
-    text: str
+    text: str = Field(..., min_length=1)
 
-@app.post("/predict")
-def predict_sentiment(req: SentimentRequest):
-    inputs = tokenizer(req.text, return_tensors="pt", truncation=True)
+def get_sentiment_label(predicted_class: int) -> str:
+    if predicted_class <= 2:
+        return "negative"
+    elif predicted_class == 3:
+        return "neutral"
+    else:
+        return "positive"
+
+def analyze_sentiment(text: str) -> dict:
+    inputs = tokenizer(text, return_tensors="pt", truncation=True)
 
     with torch.no_grad():
         outputs = model(**inputs)
@@ -37,11 +44,19 @@ def predict_sentiment(req: SentimentRequest):
     confidence = torch.softmax(logits, dim=1)[0][predicted_class - 1].item()
 
     return {
-        "text": req.text,
         "prediction": predicted_class,
+        "label": get_sentiment_label(predicted_class),
         "confidence": confidence
-    }
+           }
 
+@app.post("/predict")
+def predict_sentiment(req: SentimentRequest):
+    result = analyze_sentiment(req.text)
+
+    return {
+        "text": req.text,
+        **result
+    }
 
 @app.get("/")
 def root():
