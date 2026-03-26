@@ -3,15 +3,23 @@ from pydantic import BaseModel
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 
-app = FastAPI(title="Sentiment Analysis API",
-              description="API for multilingual sentiment analysis using HuggingFace model",
-              version="1.0")
 
 
-model_name = "nlptown/bert-base-multilingual-uncased-sentiment"
 
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForSequenceClassification.from_pretrained(model_name)
+
+MODEL_NAME = "nlptown/bert-base-multilingual-uncased-sentiment"
+APP_TITLE = "Sentiment Analysis API"
+APP_DESCRIPTION = "API for multilingual sentiment analysis using HuggingFace model"
+APP_VERSION = "1.0"
+
+app = FastAPI(
+    title=APP_TITLE,
+    description=APP_DESCRIPTION,
+    version=APP_VERSION
+)
+
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
 
 
 class SentimentRequest(BaseModel):
